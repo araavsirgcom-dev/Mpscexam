@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPPCS 2026 Full Mock Test</title>
+    <style>
+        :root { --primary: #004085; --secondary: #f8f9fa; --success: #28a745; --error: #dc3545; --tcs-blue: #1e88e5; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #e9ecef; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: var(--primary); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
+        .container { display: flex; flex: 1; overflow: hidden; }
+        #quiz-container { flex: 3; background: white; padding: 20px; overflow-y: auto; border-right: 2px solid #dee2e6; }
+        .question-block { margin-bottom: 35px; padding: 20px; border: 1px solid #eee; border-radius: 8px; transition: 0.3s; }
+        .question-text { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; color: #222; line-height: 1.5; }
+        .options-group { display: grid; gap: 12px; }
+        .option-label { padding: 12px 18px; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; background: #fff; }
+        .option-label:hover { background-color: #f1f3f5; border-color: var(--tcs-blue); }
+        input[type="radio"] { margin-right: 15px; transform: scale(1.3); cursor: pointer; }
+        #sidebar { flex: 1; background: var(--secondary); padding: 25px; display: flex; flex-direction: column; max-width: 320px; border-left: 1px solid #ddd; }
+        .btn-submit { background: var(--success); color: white; padding: 16px; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; width: 100%; transition: 0.3s; }
+        .btn-submit:hover { background: #218838; transform: translateY(-2px); }
+        .explanation { display: none; margin-top: 15px; padding: 15px; background: #eef7ff; border-left: 5px solid var(--tcs-blue); border-radius: 4px; font-size: 0.95rem; color: #333; line-height: 1.4; }
+        .correct-ans { background-color: #d4edda !important; border-color: #28a745 !important; font-weight: bold; }
+        .wrong-ans { background-color: #f8d7da !important; border-color: #dc3545 !important; }
+        #result-screen { display: none; text-align: center; padding: 60px 20px; background: white; height: 100vh; }
+        .score-box { font-size: 3rem; color: var(--primary); margin: 25px 0; font-weight: 800; }
+        @media (max-width: 768px) { .container { flex-direction: column; } #sidebar { max-width: 100%; border-left: none; border-bottom: 1px solid #ddd; order: -1; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="font-weight: bold; letter-spacing: 1px;">MPPCS PRELIMS 2026 (MOCK)</div>
+    <div id="timer">Target: 100 Questions</div>
+</header>
+
+<div class="container" id="main-test">
+    <div id="quiz-container">
+        <form id="quiz-form"></form>
+    </div>
+
+    <div id="sidebar">
+        <h3 style="margin-top:0; color: var(--primary);">Exam Status</h3>
+        <p style="font-size: 1.1rem;">Total: <b><span id="total-q">0</span> Questions</b></p>
+        <p style="color: #666; font-size: 0.9rem;">Negative Marking: None</p>
+        <hr style="width:100%; border: 0.5px solid #ddd;">
+        <button type="button" class="btn-submit" onclick="submitExam()">SUBMIT TEST</button>
+    </div>
+</div>
+
+<div id="result-screen">
+    <h2 style="color: #333;">Test Completed Successfully!</h2>
+    <div class="score-box" id="final-score"></div>
+    <p id="accuracy" style="font-size: 1.2rem; color: #555;"></p>
+    <button onclick="location.reload()" class="btn-submit" style="background: var(--tcs-blue); max-width: 300px;">Review Answers / Retake</button>
+</div>
+
+<script>
+    const quizData = [
+        { q: "कुमाऊँ हिमालय का सबसे ऊँचा शिखर कौन-सा है? / Highest peak of Kumaon Himalayas?", o: ["कामेट", "नंदा देवी", "त्रिशूल", "बद्रीनाथ"], a: 1, e: "नंदा देवी 7816 मीटर ऊँची है और कुमाऊँ हिमालय की सबसे ऊँची चोटी है। [cite: 1, 2]" },
+        { q: "किस नदी का प्राचीन नाम अस्किनी था? / Which river had the ancient name Askini?", o: ["ब्यास", "चिनाब", "झेलम", "रावी"], a: 1, e: "चिनाब नदी का प्राचीन नाम अस्किनी था। [cite: 4, 5]" },
+        { q: "ISFR 2023 के अनुसार वनों के अंतर्गत देश के शीर्ष तीन राज्य कौन-से थे?", o: ["MP, JH, CG", "MP, AP, CG", "MP, AP, SK", "MP, MH, OR"], a: 1, e: "ISFR 2023 के अनुसार शीर्ष तीन राज्य MP, अरुणाचल प्रदेश और छत्तीसगढ़ हैं। [cite: 7, 8]" },
+        { q: "पश्चिमी विक्षोभ के बारे में सही कथन चुनें: (a) पछुआ हवा (b) भूमध्यसागर (c) शीत ऋतु वर्षा", o: ["केवल c", "a और c", "b और c", "सभी a, b, c"], a: 3, e: "पश्चिमी विक्षोभ पछुआ हवाओं द्वारा भूमध्यसागर से नमी लाकर NW भारत में वर्षा कराते हैं। [cite: 9, 10]" },
+        { q: "भारत की सबसे लम्बी झील कौन-सी है? / Longest lake of India?", o: ["चिल्का", "कोल्लेरू", "वेम्बनाड", "पूकोड"], a: 2, e: "वेम्बनाड झील (केरल) भारत की सबसे लंबी (96 किमी) झील है। [cite: 11, 12]" },
+        { q: "खनिज वर्ष पुस्तक 2022: मैंगनीज उत्पादन में द्वितीय राज्य?", o: ["ओडिशा", "कर्नाटक", "महाराष्ट्र", "मध्य प्रदेश"], a: 3, e: "2022 रिपोर्ट के अनुसार मैंगनीज उत्पादन में MP दूसरे स्थान पर था। [cite: 14, 15]" },
+        { q: "चावल उत्पादन (2023-24) का सही आरोही (Ascending) क्रम:", o: ["PB, TG, UP, WB", "PB, WB, UP, TG", "OR, TG, PB, UP", "WB, TG, PB, UP"], a: 0, e: "WB प्रथम, UP द्वितीय, PB तृतीय और तेलंगाना चतुर्थ स्थान पर था। [cite: 17, 18]" },
+        { q: "अक्टूबर 2025 में किस चक्रवात ने पूर्वी तट को प्रभावित किया?", o: ["फेंगल / Fengal", "शक्ति / Shakti", "मोंथा / Montha", "असना / Asna"], a: 0, e: "चक्रवात फेंगल ने अक्टूबर 2025 में पूर्वी तटीय भागों को प्रभावित किया। [cite: 20, 21]" },
+        { q: "2011 जनगणना: किस राज्य का जनसंख्या घनत्व न्यूनतम था?", o: ["मेघालय", "मिजोरम", "अरूणाचल प्रदेश", "मणिपुर"], a: 2, e: "अरुणाचल प्रदेश का घनत्व मात्र 17 व्यक्ति प्रति वर्ग किमी था। [cite: 22, 23]" },
+        { q: "दिसम्बर 2025 तक नवीकरणीय ऊर्जा क्षमता में राज्यों का आरोही क्रम:", o: ["GJ, RJ, TN, MH", "KA, MH, RJ, GJ", "TN, MH, RJ, GJ", "KA, MH, GJ, RJ"], a: 2, e: "राजस्थान प्रथम, गुजरात द्वितीय और कर्नाटक तृतीय स्थान पर था। [cite: 25, 26]" },
+        { q: "संविधान सभा के सदस्यों का निर्वाचन कैसे हुआ था?", o: ["प्रत्यक्ष", "अप्रत्यक्ष (प्रांतीय सभा द्वारा)", "नामांकन", "कांग्रेस द्वारा"], a: 1, e: "सदस्य प्रांतीय विधान सभाओं के सदस्यों द्वारा अप्रत्यक्ष रूप से चुने गए थे। [cite: 28, 29]" },
+        { q: "SC के न्यायाधीशों की सेवा शर्तें किस अनुच्छेद द्वारा निर्धारित हैं?", o: ["129(3)", "127(4)", "122(1)", "124(2)"], a: 3, e: "अनुच्छेद 124(2) के अंतर्गत नियुक्ति और सेवा शर्तों का प्रावधान है। [cite: 31, 32]" },
+        { q: "लोकसभा और राज्यसभा को किस कार्य में समान अधिकार हैं?", o: ["धन विधेयक", "अखिल भारतीय सेवा", "अविश्वास प्रस्ताव", "संविधान संशोधन"], a: 3, e: "संविधान संशोधन विधेयक पारित करने में दोनों सदनों को समान शक्ति है। [cite: 34, 35]" },
+        { q: "MP में ग्राम पंचायत का अनिवार्य कार्य नहीं है?", o: ["सम्पत्ति परिरक्षण", "सहकारिता", "लावारिस जानवर", "पुलिस स्टेशन संचालन"], a: 3, e: "पुलिस स्टेशन राज्य सरकार के अधीन है, पंचायत के नहीं। [cite: 37, 38]" },
+        { q: "MP में नगर पंचायत का गठन किस क्षेत्र के लिए होता है?", o: ["संक्रमणशील नगरीय क्षेत्र", "लघुस्तरीय क्षेत्र", "औद्योगिक क्षेत्र", "वृहत नगरीय क्षेत्र"], a: 0, e: "यह ग्रामीण से नगरीय में बदलते (Transitional) क्षेत्रों के लिए है। [cite: 40, 41]" },
+        { q: "42वें संशोधन द्वारा DPSP में कौन-सा अनुच्छेद नहीं जोड़ा गया?", o: ["39A", "43A", "43B", "48A"], a: 2, e: "43B इसमें नहीं जोड़ा गया था (यह 97वें संशोधन से आया)। [cite: 46, 47]" },
+        { q: "संसद के संशोधन अधिकार को प्रथम चुनौती किस केस में मिली?", o: ["केशवानंद भारती", "गोलकनाथ", "चम्पकम", "शंकरी प्रसाद"], a: 3, e: "प्रथम चुनौती शंकरी प्रसाद केस (1951) में मिली थी। [cite: 49, 50]" },
+        { q: "MP विधानसभा सत्र के बारे में कौन-सा कथन असत्य है?", o: ["न्यूनतम 2 सत्र", "6 माह का अंतर", "राज्यपाल बुलाते हैं", "अध्यक्ष समाप्त करते हैं"], a: 3, e: "सत्र समाप्त (Prorogue) करने का अधिकार राज्यपाल को है। [cite: 51, 52]" },
+        { q: "एंग्लो-इंडियन समुदाय के अधिकारों की रक्षा का दायित्व किसे है?", o: ["राष्ट्रीय SC आयोग", "राष्ट्रीय ST आयोग", "राष्ट्रीय OBC आयोग", "मानवाधिकार आयोग"], a: 0, e: "राष्ट्रीय SC आयोग को यह विशेष दायित्व दिया गया है। [cite: 54, 55]" },
+        { q: "सिकल सेल रोग: एक रोगी (SS) + एक वाहक (AS) = कितने % बच्चे वाहक?", o: ["25%", "50%", "75%", "100%"], a: 1, e: "इस जेनेटिक स्थिति में 50% बच्चे वाहक (AS) होंगे। [cite: 63, 64]" },
+        { q: "इंटरनेशनल हीट वेव वर्कशॉप 2026 कब हुई?", o: ["7-8 Jan", "30-31 Jan", "11-12 Feb", "20-21 Feb"], a: 3, e: "यह वर्कशॉप 20-21 फरवरी 2026 को आयोजित हुई। [cite: 65, 66]" },
+        { q: "CSIR-NGRI किस शहर में स्थित है?", o: ["हैदराबाद", "बेंगलुरु", "नई दिल्ली", "कोलकाता"], a: 0, e: "CSIR-NGRI हैदराबाद में स्थित है। [cite: 67, 68]" },
+        { q: "INSAT श्रृंखला का पहला पूर्णतः कार्यशील उपग्रह (1980s)?", o: ["INSAT-1A", "INSAT-1B", "IRS-1A", "APPLE"], a: 1, e: "INSAT-1B (30 Aug 1983) पहला कार्यशील उपग्रह बना। [cite: 74, 75]" },
+        { q: "ग्रुप कैप्टन शुभांशु शुक्ला ने जून 2025 में क्या उपलब्धि पाई?", o: ["Moon Mission", "Space Walk", "First Indian on ISS", "Mars Mission"], a: 2, e: "वह ISS पर कदम रखने वाले पहले भारतीय और मिशन पायलट बने। [cite: 77, 78]" },
+        { q: "चंद्रयान-3 का लैंडिंग स्थल की विशेषता क्या थी?", o: ["दक्षिण ध्रुव", "विषुवतीय", "उत्तरी ध्रुव", "दूरस्थ भाग"], a: 0, e: "यह 23 अगस्त 2023 को चंद्रमा के दक्षिण ध्रुवीय क्षेत्र में उतरा। [cite: 80, 81]" },
+        { q: "मस्तिष्क का कौन-सा भाग तापक्रम नियंत्रण करता है?", o: ["मेड्युला", "सेरेब्रम", "हाइपोथैलेमस", "सेरीबेलम"], a: 2, e: "हाइपोथैलेमस तापमान, भूख और प्यास नियंत्रित करता है। [cite: 82, 83]" },
+        { q: "ई-अनुज्ञा (e-ANUGYA) किसके लिए NOC प्रदान करती है?", o: ["फसलें", "वाहन", "खनिज", "मदिरा"], a: 2, e: "यह खनिजों के परिवहन के लिए NOC प्रणाली है। [cite: 102, 103]" },
+        { q: "सर्जियो गौर (14 Jan 2026) किस देश के राजदूत बने?", o: ["इटली", "USA", "फ्रांस", "जर्मनी"], a: 3, e: "वह भारत में जर्मनी के राजदूत नियुक्त हुए। [cite: 110, 111]" },
+        { q: "मोहन नागर को 2026 में पद्मश्री किस क्षेत्र में मिला?", o: ["खेल", "राजनीति", "उद्योग", "पर्यावरण"], a: 3, e: "उन्हें पर्यावरण संरक्षण के लिए सम्मानित किया गया। [cite: 112, 113]" },
+        { q: "2026 महिला T20 वर्ल्ड कप कहाँ होगा?", o: ["IN & SL", "AUS & SA", "ENG & WAL", "NZ & WI"], a: 1, e: "यह ऑस्ट्रेलिया और दक्षिण अफ्रीका में आयोजित होगा। [cite: 115, 116]" },
+        { q: "साहित्योत्सव 2026 (साहित्य अकादमी) की थीम क्या थी?", o: ["Poetry", "Letters", "Story", "Folklore"], a: 1, e: "इसकी थीम 'Festival of Letters' रखी गई थी। [cite: 127, 128]" },
+        { q: "UN ने 2025 को किस वर्ष के रूप में घोषित किया?", o: ["वन वर्ष", "बाजरा वर्ष", "सतत् ऊर्जा वर्ष", "सहकारिता वर्ष"], a: 2, e: "2025 अंतर्राष्ट्रीय सतत् ऊर्जा वर्ष (Sustainable Energy) है। [cite: 132, 133]" },
+        { q: "तेभागा आन्दोलन कब प्रारम्भ हुआ था?", o: ["Sep 1946", "Aug 1945", "Jan 1938", "Mar 1935"], a: 0, e: "यह सितंबर 1946 में बंगाल में शुरू हुआ था। [cite: 137, 139]" },
+        { q: "चारों आश्रमों का उल्लेख सर्वप्रथम किस ग्रन्थ में मिला?", o: ["ऋग्वेद", "छांदोग्योपनिषद", "मनुस्मृति", "महाभारत"], a: 1, e: "सर्वप्रथम छांदोग्योपनिषद में इनका उल्लेख मिलता है। [cite: 141, 142]" },
+        { q: "कृष्ण-बलराम का अंकन किस हिन्द-यवन शासक के सिक्कों पर है?", o: ["मेनान्डर", "डेमेट्रियस", "अगाथोक्लिज़", "युक्रेटाइड्स"], a: 2, e: "यह शासक अगाथोक्लिज़ की मुद्राओं पर मिलता है। [cite: 145, 146]" },
+        { q: "एकमात्र महिला आलवार संत कौन थीं?", o: ["मधुर कवि", "पेरुमल", "तिरुपान", "आण्डाल"], a: 3, e: "आण्डाल एकमात्र महिला आलवार संत थीं। [cite: 147, 148]" },
+        { q: "भारतवर्ष का उल्लेख किस अभिलेख में प्राप्त होता है?", o: ["अयोध्या अभिलेख", "मेहरौली", "बेसनगर", "हाथीगुम्फा"], a: 0, e: "धनदेव के अयोध्या अभिलेख में भारतवर्ष का उल्लेख है। [cite: 152, 153]" },
+        { q: "'द फिलांसफी ऑफ द बॉम्ब' किसके अनुरोध पर बना?", o: ["बिस्मिल", "सुखदेव", "राजगुरु", "आजाद"], a: 3, e: "आजाद के अनुरोध पर भगवती चरण वोहरा ने इसे तैयार किया। [cite: 155, 156]" },
+        { q: "2011 जनगणना: MP में कमार जनजाति की जनसंख्या?", o: ["266", "466", "666", "866"], a: 2, e: "कमार जनजाति की जनसंख्या MP में 666 थी। [cite: 161, 162]" },
+        { q: "इंदल पूजा का सम्बन्ध किस जनजाति से है?", o: ["बारेला", "गोंड", "बैगा", "सहरिया"], a: 2, e: "इंदल पूजा का सम्बन्ध बैगा जनजाति से है। [cite: 166, 167]" },
+        { q: "टोटम से सम्बन्धित शब्द कौन-सा है?", o: ["टेबू", "नेतम", "बारी", "जनजाति"], a: 1, e: "'नेतम' गोंड जनजाति का एक टोटम है। [cite: 183, 184]" },
+        { q: "MP में पहला शक्कर कारखाना कहाँ खुला?", o: ["कैलारस", "सीहोर", "डबरा", "जावरा"], a: 3, e: "पहला शक्कर कारखाना जावरा में स्थापित हुआ था। [cite: 187, 188]" },
+        { q: "चम्बल बेसिन में कौन-सी मिट्टी पायी जाती है?", o: ["लाल-पीली", "लेटेराइट", "जलोढ़", "लाल दोमट"], a: 2, e: "चम्बल बेसिन में उपजाऊ जलोढ़ मिट्टी पायी जाती है। [cite: 195, 196]" },
+        { q: "2011 जनगणना: जनसंख्या वृद्धि का सही अवरोही क्रम?", o: ["Bhopal, Jhabua, Indore", "Bhopal, Indore, Gwalior", "Indore, Bhopal, Gwalior", "Indore, Jhabua, Bhopal"], a: 0, e: "भोपाल प्रथम, झाबुआ द्वितीय और इंदौर तृतीय था। [cite: 199, 200]" },
+        { q: "MP सौर ऊर्जा क्षमता (Oct 2024) कितनी थी?", o: ["60166 MW", "66610 MW", "66160 MW", "61660 MW"], a: 1, e: "आर्थिक सर्वेक्षण के अनुसार क्षमता 66610 MW थी। [cite: 204]" }
+    ];
+
+    function loadQuiz() {
+        const form = document.getElementById('quiz-form');
+        document.getElementById('total-q').innerText = quizData.length;
+
+        quizData.forEach((data, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-block';
+            qDiv.innerHTML = `
+                <div class="question-text">${index + 1}. ${data.q}</div>
+                <div class="options-group" id="q${index}">
+                    ${data.o.map((opt, i) => `
+                        <label class="option-label">
+                            <input type="radio" name="answer${index}" value="${i}">
+                            ${opt}
+                        </label>
+                    `).join('')}
+                </div>
+                <div class="explanation" id="exp${index}">
+                    ${data.e}
+                </div>
+            `;
+            form.appendChild(qDiv);
+        });
+    }
+
+    function submitExam() {
+        if(!confirm("Are you sure? Submitting will show the results and explanations.")) return;
+
+        let score = 0;
+        quizData.forEach((data, index) => {
+            const selected = document.querySelector(`input[name="answer${index}"]:checked`);
+            const options = document.getElementById(`q${index}`).children;
+            const exp = document.getElementById(`exp${index}`);
+
+            exp.style.display = 'block';
+
+            if (selected) {
+                if (parseInt(selected.value) === data.a) {
+                    score++;
+                    options[data.a].classList.add('correct-ans');
+                } else {
+                    options[selected.value].classList.add('wrong-ans');
+                    options[data.a].classList.add('correct-ans');
+                }
+            } else {
+                options[data.a].classList.add('correct-ans');
+            }
+        });
+
+        document.getElementById('main-test').style.display = 'none';
+        document.querySelector('header').style.display = 'none';
+        const resScreen = document.getElementById('result-screen');
+        resScreen.style.display = 'block';
+        document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+        document.getElementById('accuracy').innerText = `Your Accuracy: ${(score/quizData.length * 100).toFixed(1)}%`;
+        window.scrollTo(0,0);
+    }
+
+    loadQuiz();
+</script>
+
+</body>
+</html>
